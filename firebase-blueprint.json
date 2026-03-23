@@ -1,0 +1,59 @@
+{
+  "entities": {
+    "Post": {
+      "title": "Post",
+      "description": "A blog post about a game with download links.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "description": "The title of the post." },
+        "slug": { "type": "string", "description": "URL-friendly slug for the post." },
+        "description": { "type": "string", "description": "A short description of the post." },
+        "content": { "type": "string", "description": "The main content/body of the post." },
+        "featuredImage": { "type": "string", "description": "URL of the featured image." },
+        "downloadLink": { "type": "string", "description": "URL to download the game." },
+        "version": { "type": "string", "description": "Game version." },
+        "size": { "type": "string", "description": "File size of the game." },
+        "category": { "type": "string", "description": "Category of the game." },
+        "views": { "type": "number", "description": "Number of views." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Timestamp of creation." }
+      },
+      "required": ["title", "slug", "description", "content", "featuredImage", "downloadLink", "version", "size", "category", "views", "createdAt"]
+    },
+    "Comment": {
+      "title": "Comment",
+      "description": "A user comment on a post.",
+      "type": "object",
+      "properties": {
+        "postId": { "type": "string", "description": "The ID of the post this comment belongs to." },
+        "name": { "type": "string", "description": "The name of the commenter." },
+        "message": { "type": "string", "description": "The comment message." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Timestamp of creation." }
+      },
+      "required": ["postId", "name", "message", "createdAt"]
+    },
+    "User": {
+      "title": "User",
+      "description": "A registered user or admin.",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string", "format": "email", "description": "The user's email address." },
+        "role": { "type": "string", "enum": ["admin", "user"], "description": "The user's role." }
+      },
+      "required": ["email", "role"]
+    }
+  },
+  "firestore": {
+    "/posts/{postId}": {
+      "schema": { "$ref": "#/entities/Post" },
+      "description": "Stores blog posts."
+    },
+    "/comments/{commentId}": {
+      "schema": { "$ref": "#/entities/Comment" },
+      "description": "Stores comments on blog posts."
+    },
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "Stores user profiles and roles."
+    }
+  }
+}

@@ -1,0 +1,154 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: posts
+    // Document ID: auto-generated
+    // Fields:
+    //   - title: string (required)
+    //   - slug: string (required)
+    //   - description: string (required)
+    //   - content: string (required)
+    //   - featuredImage: string (required, URL)
+    //   - downloadLink: string (required, URL)
+    //   - version: string (required)
+    //   - size: string (required)
+    //   - category: string (required)
+    //   - views: number (required)
+    //   - createdAt: timestamp (required)
+    //
+    // Collection: comments
+    // Document ID: auto-generated
+    // Fields:
+    //   - postId: string (required)
+    //   - name: string (required)
+    //   - message: string (required)
+    //   - createdAt: timestamp (required)
+    //
+    // Collection: users
+    // Document ID: user UID
+    // Fields:
+    //   - email: string (required, email)
+    //   - role: string (required, 'admin' | 'user')
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (
+          (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' &&
+          (!('status' in get(/databases/$(database)/documents/users/$(request.auth.uid)).data) || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.status == 'approved')) ||
+          (request.auth.token.email == "gyantid830@gmail.com")
+        );
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+
+    function isValidUrl(url) {
+      return url is string && (url.matches("^https://.*") || url.matches("^http://.*"));
+    }
+
+    function isValidEmail(email) {
+      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+
+    function isValidPost() {
+      let allowedFields = ['title', 'slug', 'description', 'content', 'featuredImage', 'downloadLink', 'version', 'size', 'category', 'views', 'createdAt'];
+      return hasOnlyAllowedFields(allowedFields) &&
+             hasRequiredFields(allowedFields) &&
+             request.resource.data.title is string && request.resource.data.title.size() > 0 && request.resource.data.title.size() <= 150 &&
+             request.resource.data.slug is string && request.resource.data.slug.size() > 0 && request.resource.data.slug.size() <= 150 &&
+             request.resource.data.description is string && request.resource.data.description.size() > 0 && request.resource.data.description.size() <= 500 &&
+             request.resource.data.content is string && request.resource.data.content.size() > 0 && request.resource.data.content.size() <= 100000 &&
+             isValidUrl(request.resource.data.featuredImage) &&
+             isValidUrl(request.resource.data.downloadLink) &&
+             request.resource.data.version is string && request.resource.data.version.size() <= 50 &&
+             request.resource.data.size is string && request.resource.data.size.size() <= 50 &&
+             request.resource.data.category is string && request.resource.data.category.size() > 0 && request.resource.data.category.size() <= 50 &&
+             request.resource.data.views is number && request.resource.data.views >= 0 &&
+             request.resource.data.createdAt is timestamp;
+    }
+
+    function isOnlyIncrementingViews() {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['views']) &&
+             request.resource.data.views == resource.data.views + 1;
+    }
+
+    function isValidComment() {
+      let allowedFields = ['postId', 'name', 'message', 'createdAt'];
+      return hasOnlyAllowedFields(allowedFields) &&
+             hasRequiredFields(allowedFields) &&
+             request.resource.data.postId is string && request.resource.data.postId.size() > 0 &&
+             request.resource.data.name is string && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 50 &&
+             request.resource.data.message is string && request.resource.data.message.size() > 0 && request.resource.data.message.size() <= 1000 &&
+             request.resource.data.createdAt is timestamp;
+    }
+
+    function isValidUser() {
+      let allowedFields = ['email', 'role', 'status', 'createdAt'];
+      return hasOnlyAllowedFields(allowedFields) &&
+             request.resource.data.keys().hasAll(['email', 'role']) &&
+             isValidEmail(request.resource.data.email) &&
+             request.resource.data.role in ['admin', 'user'] &&
+             (!('status' in request.resource.data) || request.resource.data.status in ['pending', 'approved', 'rejected']) &&
+             (!('createdAt' in request.resource.data) || request.resource.data.createdAt is timestamp);
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /posts/{postId} {
+      allow read: if true;
+      allow create: if isAdmin() && isValidPost();
+      allow update: if (isAdmin() && isValidPost()) || isOnlyIncrementingViews();
+      allow delete: if isAdmin();
+    }
+
+    match /comments/{commentId} {
+      allow read: if true;
+      allow create: if isValidComment();
+      allow update: if isAdmin() && isValidComment();
+      allow delete: if isAdmin();
+    }
+
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isOwner(userId) && isValidUser() && (
+        request.resource.data.role == 'user' || 
+        (request.resource.data.role == 'admin' && request.resource.data.status == 'pending') || 
+        isAdmin()
+      );
+      allow update: if (isOwner(userId) && isValidUser() && request.resource.data.role == resource.data.role && (!('status' in request.resource.data) || request.resource.data.status == resource.data.status)) || (isAdmin() && isValidUser());
+      allow delete: if isAdmin();
+    }
+  }
+}
