@@ -8,6 +8,8 @@ import { Download, Eye, Calendar, Tag, HardDrive, Hash, User, MessageSquare, Sha
 import { format } from 'date-fns';
 import Markdown from 'react-markdown';
 import { motion } from 'motion/react';
+import SEO from '../components/SEO';
+import AdBanner from '../components/AdBanner';
 
 export default function SinglePost() {
   const { slug } = useParams<{ slug: string }>();
@@ -19,6 +21,8 @@ export default function SinglePost() {
 
   useEffect(() => {
     if (!slug) return;
+    
+    let unsubscribeComments: (() => void) | undefined;
 
     const fetchPost = async () => {
       try {
@@ -36,10 +40,20 @@ export default function SinglePost() {
           });
 
           // Fetch comments
-          const commentsQuery = query(collection(db, 'comments'), where('postId', '==', postDoc.id), orderBy('createdAt', 'desc'));
-          onSnapshot(commentsQuery, (snapshot) => {
+          const commentsQuery = query(collection(db, 'comments'), where('postId', '==', postDoc.id));
+          unsubscribeComments = onSnapshot(commentsQuery, (snapshot) => {
             const commentsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Comment));
+            
+            // Sort comments on client side
+            commentsData.sort((a, b) => {
+              const dateA = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+              const dateB = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+              return dateB - dateA;
+            });
+            
             setComments(commentsData);
+          }, (error) => {
+            console.error("Error fetching comments:", error);
           });
         }
       } catch (error) {
@@ -50,6 +64,12 @@ export default function SinglePost() {
     };
 
     fetchPost();
+    
+    return () => {
+      if (unsubscribeComments) {
+        unsubscribeComments();
+      }
+    };
   }, [slug]);
 
   const handleCommentSubmit = async (e: React.FormEvent) => {
@@ -91,6 +111,30 @@ export default function SinglePost() {
 
   return (
     <div className="min-h-screen bg-black pb-20">
+      <SEO 
+        title={post.title}
+        description={post.content.substring(0, 160).replace(/[#*`]/g, '') + '...'}
+        image={post.featuredImage}
+        url={window.location.href}
+        type="article"
+        schema={{
+          "@context": "https://schema.org",
+          "@type": "SoftwareApplication",
+          "name": post.title,
+          "operatingSystem": "ANDROID",
+          "applicationCategory": "GameApplication",
+          "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+          },
+          "description": post.content.substring(0, 300).replace(/[#*`]/g, ''),
+          "image": post.featuredImage,
+          "softwareVersion": post.version,
+          "fileSize": post.size,
+          "datePublished": post.createdAt?.toDate ? post.createdAt.toDate().toISOString() : new Date().toISOString()
+        }}
+      />
       {/* Hero Header */}
       <div className="relative h-[50vh] min-h-[400px] w-full">
         <div className="absolute inset-0">
@@ -143,10 +187,20 @@ export default function SinglePost() {
           
           {/* Main Content */}
           <div className="lg:col-span-2">
+            {/* Top Content Ad Banner */}
+            <div className="mb-8">
+              <AdBanner className="min-h-[120px]" />
+            </div>
+
             <div className="prose prose-invert prose-neon max-w-none mb-12">
               <div className="markdown-body text-zinc-300 leading-relaxed">
                 <Markdown>{post.content}</Markdown>
               </div>
+            </div>
+
+            {/* Bottom Content Ad Banner */}
+            <div className="mb-12">
+              <AdBanner className="min-h-[120px]" />
             </div>
 
             {/* Comments Section */}
@@ -220,6 +274,9 @@ export default function SinglePost() {
           <div className="lg:col-span-1">
             <div className="sticky top-24 space-y-8">
               
+              {/* Sidebar Ad Banner Top */}
+              <AdBanner className="min-h-[250px]" />
+
               {/* Game Info Card */}
               <div className="bg-zinc-900/80 rounded-2xl border border-white/10 p-6">
                 <h3 className="text-xl font-display font-bold text-white mb-6 border-b border-white/10 pb-4">Game Info</h3>
@@ -283,6 +340,9 @@ export default function SinglePost() {
                   </button>
                 </div>
               </div>
+
+              {/* Sidebar Ad Banner Bottom */}
+              <AdBanner className="min-h-[250px]" />
 
             </div>
           </div>

@@ -7,6 +7,8 @@ import PostCard from '../components/PostCard';
 import { handleFirestoreError } from '../utils/errorHandling';
 import { Search, Filter, Gamepad2 } from 'lucide-react';
 import { motion } from 'motion/react';
+import SEO from '../components/SEO';
+import AdBanner from '../components/AdBanner';
 
 export default function Blog() {
   const [posts, setPosts] = useState<Post[]>([]);
@@ -19,20 +21,28 @@ export default function Blog() {
   const [categories, setCategories] = useState<string[]>([]);
 
   useEffect(() => {
-    let q = query(collection(db, 'posts'), orderBy('createdAt', 'desc'));
+    let q = query(collection(db, 'posts'));
     
     if (categoryFilter) {
-      q = query(collection(db, 'posts'), where('category', '==', categoryFilter), orderBy('createdAt', 'desc'));
+      q = query(collection(db, 'posts'), where('category', '==', categoryFilter));
     }
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       let postsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post));
       
-      // Extract unique categories
-      const uniqueCategories = Array.from(new Set(postsData.map(p => p.category))).filter(Boolean);
-      setCategories(uniqueCategories);
+      // Sort on client side to avoid requiring a composite index
+      postsData.sort((a, b) => {
+        const dateA = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+        const dateB = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+        return dateB - dateA;
+      });
 
-      // Client-side search filtering (since Firestore doesn't support full-text search natively)
+      // Extract unique categories from ALL posts (we need to fetch all posts to get all categories)
+      // Actually, if we are filtering by category, we only get that category.
+      // To get all categories, we should fetch them separately or just keep the existing ones.
+      // For now, we'll just update the posts.
+      
+      // Client-side search filtering
       if (searchQuery) {
         const lowerQuery = searchQuery.toLowerCase();
         postsData = postsData.filter(p => 
@@ -49,6 +59,17 @@ export default function Blog() {
 
     return () => unsubscribe();
   }, [searchQuery, categoryFilter]);
+
+  // Fetch all categories once
+  useEffect(() => {
+    const q = query(collection(db, 'posts'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const postsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post));
+      const uniqueCategories = Array.from(new Set(postsData.map(p => p.category))).filter(Boolean);
+      setCategories(uniqueCategories);
+    });
+    return () => unsubscribe();
+  }, []);
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
@@ -71,6 +92,11 @@ export default function Blog() {
 
   return (
     <div className="min-h-screen bg-black py-12">
+      <SEO 
+        title={categoryFilter ? `${categoryFilter} Games` : "All Games & Mods"}
+        description="Browse our complete collection of modded games, premium APKs, and gaming resources."
+        url={window.location.href}
+      />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         <div className="text-center mb-16">
@@ -87,7 +113,7 @@ export default function Blog() {
         </div>
 
         {/* Filters & Search */}
-        <div className="flex flex-col md:flex-row gap-6 mb-12">
+        <div className="flex flex-col md:flex-row gap-6 mb-8">
           <div className="relative flex-1">
             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
               <Search className="h-5 w-5 text-zinc-500" />
@@ -127,6 +153,11 @@ export default function Blog() {
               </button>
             ))}
           </div>
+        </div>
+
+        {/* Top Ad Banner */}
+        <div className="mb-12">
+          <AdBanner className="min-h-[120px]" />
         </div>
 
         {/* Results */}

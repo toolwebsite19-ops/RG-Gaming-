@@ -11,27 +11,32 @@ export default function Ticker() {
   const [trendingPosts, setTrendingPosts] = useState<Post[]>([]);
 
   useEffect(() => {
-    // Fetch Latest
-    const latestQuery = query(collection(db, 'posts'), orderBy('createdAt', 'desc'), limit(5));
-    const unsubscribeLatest = onSnapshot(latestQuery, (snapshot) => {
+    const q = query(collection(db, 'posts'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
       const postsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post));
-      setLatestPosts(postsData);
-    }, (error) => {
-      handleFirestoreError(error, OperationType.LIST, 'posts');
-    });
+      
+      // Sort by createdAt for latest posts
+      const latest = [...postsData].sort((a, b) => {
+        const dateA = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+        const dateB = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+        return dateB - dateA;
+      }).slice(0, 5);
+      
+      // Sort by views for trending posts
+      const trending = [...postsData].sort((a, b) => {
+        const viewsA = a.views || 0;
+        const viewsB = b.views || 0;
+        return viewsB - viewsA;
+      }).slice(0, 5);
 
-    // Fetch Trending
-    const trendingQuery = query(collection(db, 'posts'), orderBy('views', 'desc'), limit(5));
-    const unsubscribeTrending = onSnapshot(trendingQuery, (snapshot) => {
-      const postsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post));
-      setTrendingPosts(postsData);
+      setLatestPosts(latest);
+      setTrendingPosts(trending);
     }, (error) => {
       handleFirestoreError(error, OperationType.LIST, 'posts');
     });
 
     return () => {
-      unsubscribeLatest();
-      unsubscribeTrending();
+      unsubscribe();
     };
   }, []);
 

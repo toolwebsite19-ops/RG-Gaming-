@@ -5,6 +5,8 @@ import { collection, query, orderBy, limit, onSnapshot } from 'firebase/firestor
 import { db } from '../firebase';
 import { Post, OperationType } from '../types';
 import PostCard from '../components/PostCard';
+import SEO from '../components/SEO';
+import AdBanner from '../components/AdBanner';
 import { handleFirestoreError } from '../utils/errorHandling';
 import { Gamepad2, Youtube, ArrowRight, Search, Zap } from 'lucide-react';
 
@@ -15,31 +17,53 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
-    const latestQuery = query(collection(db, 'posts'), orderBy('createdAt', 'desc'), limit(6));
-    const unsubscribeLatest = onSnapshot(latestQuery, (snapshot) => {
+    const q = query(collection(db, 'posts'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
       const postsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post));
-      setLatestPosts(postsData);
+      
+      // Sort by createdAt for latest posts
+      const latest = [...postsData].sort((a, b) => {
+        const dateA = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+        const dateB = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+        return dateB - dateA;
+      }).slice(0, 6);
+      
+      // Sort by views for popular posts
+      const popular = [...postsData].sort((a, b) => {
+        const viewsA = a.views || 0;
+        const viewsB = b.views || 0;
+        return viewsB - viewsA;
+      }).slice(0, 3);
+
+      setLatestPosts(latest);
+      setPopularPosts(popular);
       setLoading(false);
     }, (error) => {
       handleFirestoreError(error, OperationType.LIST, 'posts');
     });
 
-    const popularQuery = query(collection(db, 'posts'), orderBy('views', 'desc'), limit(3));
-    const unsubscribePopular = onSnapshot(popularQuery, (snapshot) => {
-      const postsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post));
-      setPopularPosts(postsData);
-    }, (error) => {
-      handleFirestoreError(error, OperationType.LIST, 'posts');
-    });
-
     return () => {
-      unsubscribeLatest();
-      unsubscribePopular();
+      unsubscribe();
     };
   }, []);
 
   return (
     <div className="min-h-screen bg-black">
+      <SEO 
+        title="Download Latest Mod Games & APKs" 
+        description="Your ultimate destination for premium unlocked games, tutorials, and gaming news. Download and play your favorite games today."
+        schema={{
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          "name": "RG Gaming",
+          "url": window.location.origin,
+          "potentialAction": {
+            "@type": "SearchAction",
+            "target": `${window.location.origin}/latest?search={search_term_string}`,
+            "query-input": "required name=search_term_string"
+          }
+        }}
+      />
       {/* Hero Section */}
       <section className="relative overflow-hidden pt-32 pb-20 lg:pt-48 lg:pb-32">
         <div className="absolute inset-0 bg-[url('https://picsum.photos/seed/gaming/1920/1080?blur=10')] bg-cover bg-center opacity-20" />
@@ -131,6 +155,11 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Top Ad Banner */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-12">
+        <AdBanner className="min-h-[150px]" />
+      </div>
+
       {/* Popular Games Section */}
       <section className="py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -158,6 +187,11 @@ export default function Home() {
           )}
         </div>
       </section>
+
+      {/* Middle Ad Banner */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 my-8">
+        <AdBanner className="min-h-[150px]" />
+      </div>
 
       {/* Latest Games Section */}
       <section className="py-20 bg-zinc-950 border-t border-white/5">

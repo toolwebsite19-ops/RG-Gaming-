@@ -1,10 +1,16 @@
 import React from 'react';
 import { Gamepad2, Youtube, Shield, Zap, Users } from 'lucide-react';
 import { motion } from 'motion/react';
+import SEO from '../components/SEO';
 
 export default function About() {
   return (
     <div className="min-h-screen bg-black py-20">
+      <SEO 
+        title="About Us"
+        description="Learn more about RG Gaming, your trusted source for the best modded games, premium APKs, and gaming content."
+        url={window.location.href}
+      />
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         
         <div className="text-center mb-20">

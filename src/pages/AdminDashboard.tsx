@@ -26,9 +26,17 @@ export default function AdminDashboard() {
       return; // Stay on the page but show pending/rejected message
     }
 
-    const q = query(collection(db, 'posts'), orderBy('createdAt', 'desc'));
+    const q = query(collection(db, 'posts'));
     const unsubscribePosts = onSnapshot(q, (snapshot) => {
       const postsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post));
+      
+      // Sort by createdAt descending
+      postsData.sort((a, b) => {
+        const dateA = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+        const dateB = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+        return dateB - dateA;
+      });
+
       setPosts(postsData);
       setLoading(false);
     }, (error) => {
