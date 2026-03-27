@@ -55,7 +55,7 @@ export default function AdBanner({ className = '', slotId = 'XXXXXXXXXX' }: AdBa
         ref={adRef}
         className="adsbygoogle mt-4"
         style={{ display: 'block', width: '100%', minWidth: '250px', minHeight: '90px' }}
-        data-ad-client="ca-pub-XXXXXXXXXXXXXXXX" // Replace with your actual Publisher ID
+        data-ad-client="ca-pub-1003200607301799" // Replace with your actual Publisher ID
         data-ad-slot={slotId} // Replace with your Ad Unit ID if using manual ads
         data-ad-format="auto"
         data-full-width-responsive="true"
