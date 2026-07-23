@@ -22,6 +22,12 @@ export default function SinglePost() {
   useEffect(() => {
     if (!slug) return;
     
+    // Inject Monetag popunder ad specifically for the download page area
+    const monetagScript = document.createElement('script');
+    monetagScript.dataset.zone = '11379850';
+    monetagScript.src = 'https://al5sm.com/tag.min.js';
+    document.body.appendChild(monetagScript);
+    
     let unsubscribeComments: (() => void) | undefined;
 
     const fetchPost = async () => {
@@ -68,6 +74,11 @@ export default function SinglePost() {
     return () => {
       if (unsubscribeComments) {
         unsubscribeComments();
+      }
+      
+      // Clean up Monetag script when leaving the page
+      if (document.body.contains(monetagScript)) {
+        document.body.removeChild(monetagScript);
       }
     };
   }, [slug]);
