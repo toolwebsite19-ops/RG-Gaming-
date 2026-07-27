@@ -13,6 +13,7 @@ export default function AdminDashboard() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [pendingAdmins, setPendingAdmins] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const [postToDelete, setPostToDelete] = useState<string | null>(null);
   const { userRole, userStatus, currentUser } = useAuth();
   const navigate = useNavigate();
 
@@ -61,12 +62,11 @@ export default function AdminDashboard() {
   }, [userRole, userStatus, currentUser, navigate]);
 
   const handleDelete = async (id: string) => {
-    if (window.confirm('Are you sure you want to delete this post?')) {
-      try {
-        await deleteDoc(doc(db, 'posts', id));
-      } catch (error) {
-        handleFirestoreError(error, OperationType.DELETE, `posts/${id}`);
-      }
+    try {
+      await deleteDoc(doc(db, 'posts', id));
+      setPostToDelete(null);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.DELETE, `posts/${id}`);
     }
   };
 
@@ -298,7 +298,7 @@ export default function AdminDashboard() {
                           <Edit className="w-5 h-5" />
                         </Link>
                         <button
-                          onClick={() => handleDelete(post.id)}
+                          onClick={() => setPostToDelete(post.id)}
                           className="p-2 text-red-400 hover:text-red-300 hover:bg-red-400/10 rounded-lg transition-all"
                           title="Delete Post"
                         >
@@ -320,6 +320,29 @@ export default function AdminDashboard() {
           </div>
         </div>
 
+        {/* Delete Confirmation Modal */}
+        {postToDelete && (
+          <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
+            <div className="bg-zinc-900 border border-white/10 p-6 rounded-2xl max-w-md w-full">
+              <h3 className="text-xl font-bold text-white mb-2">Delete Post</h3>
+              <p className="text-zinc-400 mb-6">Are you sure you want to delete this post? This action cannot be undone.</p>
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => setPostToDelete(null)}
+                  className="px-4 py-2 text-zinc-400 hover:text-white transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => handleDelete(postToDelete)}
+                  className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

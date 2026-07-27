@@ -63,26 +63,27 @@ export default function AdminCreatePost() {
     setUploading(true);
     setError('');
 
-    const storageRef = ref(storage, `posts/${Date.now()}_${file.name}`);
-    const uploadTask = uploadBytesResumable(storageRef, file);
+    // Check file size (limit to 1MB to avoid Firestore limits)
+    if (file.size > 1024 * 1024) {
+      setError('Image is too large. Please choose an image under 1MB.');
+      setUploading(false);
+      return;
+    }
 
-    uploadTask.on(
-      'state_changed',
-      (snapshot) => {
-        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-        setUploadProgress(progress);
-      },
-      (err) => {
-        setError('Image upload failed: ' + err.message);
-        setUploading(false);
-      },
-      async () => {
-        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-        setFormData(prev => ({ ...prev, featuredImage: downloadURL }));
-        setUploading(false);
-        setUploadProgress(0);
-      }
-    );
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setFormData(prev => ({ ...prev, featuredImage: reader.result as string }));
+      setUploading(false);
+      setUploadProgress(0);
+    };
+    reader.onerror = () => {
+      setError('Failed to read image file.');
+      setUploading(false);
+    };
+    
+    // Simulate upload progress for UX
+    setUploadProgress(50);
+    reader.readAsDataURL(file);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -99,7 +100,7 @@ export default function AdminCreatePost() {
       
       // Trigger push notification via the server API
       try {
-        await fetch('/api/notifications/send', {
+        const notifyRes = await fetch('/api/notifications/send', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -110,6 +111,8 @@ export default function AdminCreatePost() {
             url: `${window.location.origin}/post/${formData.slug}`
           }),
         });
+        const notifyData = await notifyRes.json();
+        console.log("Notification send response:", notifyData);
       } catch (notifyErr) {
         console.error("Failed to trigger push notification:", notifyErr);
         // Don't block the UI if notification fails
@@ -256,7 +259,8 @@ export default function AdminCreatePost() {
                   {formData.featuredImage && (
                     <div className="relative aspect-video rounded-xl overflow-hidden border border-white/10">
                       <img 
-                        src={formData.featuredImage || 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&q=80&w=800'} 
+                        key={formData.featuredImage}
+                        src={formData.featuredImage.startsWith('http') || formData.featuredImage.startsWith('/') ? formData.featuredImage : `https://${formData.featuredImage}`} 
                         alt="Preview" 
                         className="w-full h-full object-cover" 
                         referrerPolicy="no-referrer"

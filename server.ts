@@ -34,7 +34,7 @@ async function startServer() {
         },
         body: JSON.stringify({
           app_id: appId,
-          included_segments: ["Subscribed Users"],
+          included_segments: ["Subscribed Users", "Active Users", "Total Subscriptions"],
           headings: { en: title },
           contents: { en: content || "Check out our latest post!" },
           url: url,
@@ -42,6 +42,7 @@ async function startServer() {
       });
 
       const data = await response.json();
+      console.log("OneSignal API response:", data);
       
       if (!response.ok) {
         throw new Error(data.errors ? data.errors.join(", ") : "Failed to send notification");
