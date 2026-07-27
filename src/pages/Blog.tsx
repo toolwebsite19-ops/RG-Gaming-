@@ -93,9 +93,9 @@ export default function Blog() {
   return (
     <div className="min-h-screen bg-black py-12">
       <SEO 
-        title={categoryFilter ? `${categoryFilter} Games` : "All Games & Mods"}
-        description="Browse our complete collection of modded games, premium APKs, and gaming resources."
-        keywords={`mod apk, mod games, unlocked games, premium apk, android mod apk${categoryFilter ? `, ${categoryFilter} mod apk` : ''}`}
+        title={categoryFilter ? `${categoryFilter} Mod Games & APKs` : "All Mod Games & APKs (rggaming ytt)"}
+        description="Browse our complete collection of modded games, premium APKs, and gaming resources at RG Gaming."
+        keywords={`rggaming, rggaming ytt, rg gaming, mod apk, mod games, unlocked games, premium apk, android mod apk${categoryFilter ? `, ${categoryFilter} mod apk` : ''}`}
         url={window.location.href}
       />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

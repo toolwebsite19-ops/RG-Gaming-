@@ -7,8 +7,9 @@ export default function About() {
   return (
     <div className="min-h-screen bg-black py-20">
       <SEO 
-        title="About Us"
-        description="Learn more about RG Gaming, your trusted source for the best modded games, premium APKs, and gaming content."
+        title="About Us - RG Gaming (rggaming ytt)"
+        description="Learn more about RG Gaming (rggaming ytt), your trusted source for the best modded games, premium APKs, and gaming content."
+        keywords="rggaming, rggaming ytt, rg gaming, about rg gaming, mod apk provider"
         url={window.location.href}
       />
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">

@@ -122,7 +122,7 @@ export default function SinglePost() {
 
   const getKeywords = (title: string, category: string) => {
     const baseWords = title.toLowerCase().split(/[\s-]+/).filter(w => w.length > 2);
-    return [...new Set([...baseWords, category.toLowerCase(), "mod apk", "download", "free", "latest version", "android game", "gaming", "unlocked", "premium"])].join(", ");
+    return [...new Set([...baseWords, category.toLowerCase(), "rggaming", "rggaming ytt", "rg gaming", "mod apk", "download", "free", "latest version", "android game", "gaming", "unlocked", "premium"])].join(", ");
   };
 
   return (
