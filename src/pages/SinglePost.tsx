@@ -120,6 +120,11 @@ export default function SinglePost() {
     );
   }
 
+  const getKeywords = (title: string, category: string) => {
+    const baseWords = title.toLowerCase().split(/[\s-]+/).filter(w => w.length > 2);
+    return [...new Set([...baseWords, category.toLowerCase(), "mod apk", "download", "free", "latest version", "android game", "gaming", "unlocked", "premium"])].join(", ");
+  };
+
   return (
     <div className="min-h-screen bg-black pb-20">
       <SEO 
@@ -128,6 +133,7 @@ export default function SinglePost() {
         image={post.featuredImage}
         url={window.location.href}
         type="article"
+        keywords={getKeywords(post.title, post.category)}
         schema={{
           "@context": "https://schema.org",
           "@type": "SoftwareApplication",

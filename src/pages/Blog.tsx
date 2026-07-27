@@ -95,6 +95,7 @@ export default function Blog() {
       <SEO 
         title={categoryFilter ? `${categoryFilter} Games` : "All Games & Mods"}
         description="Browse our complete collection of modded games, premium APKs, and gaming resources."
+        keywords={`mod apk, mod games, unlocked games, premium apk, android mod apk${categoryFilter ? `, ${categoryFilter} mod apk` : ''}`}
         url={window.location.href}
       />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

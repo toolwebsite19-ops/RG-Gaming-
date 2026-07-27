@@ -52,6 +52,7 @@ export default function Home() {
       <SEO 
         title="Download Latest Mod Games & APKs" 
         description="Your ultimate destination for premium unlocked games, tutorials, and gaming news. Download and play your favorite games today."
+        keywords="mod apk, mod games, unlocked games, premium apk, free games download, android mod apk, gaming news, latest mod apk, car simulator 2 mod apk, rg gaming"
         schema={{
           "@context": "https://schema.org",
           "@type": "WebSite",

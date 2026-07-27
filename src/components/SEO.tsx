@@ -8,9 +8,10 @@ interface SEOProps {
   url?: string;
   type?: string;
   schema?: Record<string, any>;
+  keywords?: string;
 }
 
-export default function SEO({ title, description, image, url, type = 'website', schema }: SEOProps) {
+export default function SEO({ title, description, image, url, type = 'website', schema, keywords }: SEOProps) {
   const siteName = 'RG Gaming';
   const fullTitle = `${title} | ${siteName}`;
   const defaultImage = 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&q=80&w=1200';
@@ -21,6 +22,8 @@ export default function SEO({ title, description, image, url, type = 'website', 
       {/* Basic HTML Meta Tags */}
       <title>{fullTitle}</title>
       <meta name="description" content={description} />
+      {keywords && <meta name="keywords" content={keywords} />}
+
 
       {/* Open Graph / Facebook */}
       <meta property="og:type" content={type} />
