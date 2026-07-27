@@ -13,6 +13,21 @@
     
     <!-- Monetag Vignette Ads -->
     <script>(function(s){s.dataset.zone='11379862',s.src='https://n6wxm.com/vignette.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))</script>
+
+    <!-- OneSignal Web SDK Setup -->
+    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+    <script>
+      window.OneSignalDeferred = window.OneSignalDeferred || [];
+      OneSignalDeferred.push(async function(OneSignal) {
+        await OneSignal.init({
+          appId: "c9157d14-9695-46be-b5bd-dcdd0e444560",
+          safari_web_id: "web.onesignal.auto.459ab5a0-25ed-43f1-a7b1-99d986ce9992",
+          notifyButton: {
+            enable: true,
+          },
+        });
+      });
+    </script>
   </head>
   <body>
     <div id="root"></div>
