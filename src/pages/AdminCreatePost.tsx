@@ -96,6 +96,25 @@ export default function AdminCreatePost() {
         views: 0,
         createdAt: serverTimestamp()
       });
+      
+      // Trigger push notification via the server API
+      try {
+        await fetch('/api/notifications/send', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            title: formData.title,
+            content: formData.description,
+            url: `${window.location.origin}/post/${formData.slug}`
+          }),
+        });
+      } catch (notifyErr) {
+        console.error("Failed to trigger push notification:", notifyErr);
+        // Don't block the UI if notification fails
+      }
+
       navigate('/admin');
     } catch (err: any) {
       setError(err.message || 'Failed to create post');
