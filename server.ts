@@ -20,52 +20,6 @@ async function startServer() {
   // Trust proxy to get correct host and protocol from load balancer
   app.set('trust proxy', true);
 
-  // Dynamic Sitemap Generator
-  app.get('/sitemap.xml', async (req, res) => {
-    try {
-      const postsSnapshot = await getDocs(collection(db, 'posts'));
-      
-      const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
-      const host = req.headers['x-forwarded-host'] || req.get('host');
-      const baseUrl = `${protocol}://${host}`;
-      
-      let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
-      xml += `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
-      
-      // Static routes
-      const staticRoutes = ['/', '/latest', '/categories', '/about'];
-      for (const route of staticRoutes) {
-        xml += `  <url>\n`;
-        xml += `    <loc>${baseUrl}${route}</loc>\n`;
-        xml += `    <changefreq>daily</changefreq>\n`;
-        xml += `    <priority>${route === '/' ? '1.0' : '0.8'}</priority>\n`;
-        xml += `  </url>\n`;
-      }
-      
-      // Dynamic posts
-      postsSnapshot.forEach(doc => {
-        const post = doc.data();
-        if (post.slug) {
-          xml += `  <url>\n`;
-          xml += `    <loc>${baseUrl}/post/${post.slug}</loc>\n`;
-          const date = post.createdAt?.toDate ? post.createdAt.toDate().toISOString() : new Date().toISOString();
-          xml += `    <lastmod>${date}</lastmod>\n`;
-          xml += `    <changefreq>weekly</changefreq>\n`;
-          xml += `    <priority>0.9</priority>\n`;
-          xml += `  </url>\n`;
-        }
-      });
-      
-      xml += `</urlset>`;
-      
-      res.header('Content-Type', 'application/xml');
-      res.send(xml);
-    } catch (error) {
-      console.error('Error generating sitemap:', error);
-      res.status(500).end();
-    }
-  });
-
   // API Route for sending OneSignal notifications
   app.post("/api/notifications/send", async (req, res) => {
     const { title, url, content } = req.body;
